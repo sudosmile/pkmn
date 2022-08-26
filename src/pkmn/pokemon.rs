@@ -9,6 +9,7 @@ use anyhow::Result;
 use indicatif::ProgressBar;
 use rustemon::client::RustemonClient;
 
+#[allow(dead_code)]
 pub struct MyPokemon {
     name: String,
     types: Types,
@@ -50,7 +51,6 @@ pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
     Ok(list_of_pokemon)
 }
 
-// TODO: make generic
 impl MyPokemon {
     pub async fn from_list_with_select(
         client: &RustemonClient,

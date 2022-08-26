@@ -1,4 +1,5 @@
 use rustemon::model::pokemon::PokemonType;
+use rustemon::model::pokemon::Type as rustemonType;
 use rustemon::model::resource::NamedApiResource;
 
 pub enum Type {
@@ -38,15 +39,23 @@ impl From<Vec<PokemonType>> for Types {
     }
 }
 
-impl From<NamedApiResource<rustemon::model::pokemon::Type>> for Type {
-    fn from(
-        t: rustemon::model::resource::NamedApiResource<rustemon::model::pokemon::Type>,
-    ) -> Self {
+impl From<NamedApiResource<rustemonType>> for Type {
+    fn from(t: NamedApiResource<rustemonType>) -> Self {
         let name = match t.name {
             Some(name) => name,
             None => panic!(),
         };
         name.into()
+    }
+}
+
+impl From<PokemonType> for Type {
+    fn from(t: PokemonType) -> Self {
+        let namedapiressource = match t.type_ {
+            Some(t) => t,
+            None => panic!(),
+        };
+        namedapiressource.into()
     }
 }
 
@@ -73,20 +82,6 @@ impl From<String> for Type {
             "flying" => Self::Flying,
             _ => panic!(),
         }
-    }
-}
-
-impl From<PokemonType> for Type {
-    fn from(t: PokemonType) -> Self {
-        let namedapiressource = match t.type_ {
-            Some(t) => t,
-            None => panic!(),
-        };
-        let name = match namedapiressource.name {
-            Some(name) => name,
-            None => panic!(),
-        };
-        name.into()
     }
 }
 

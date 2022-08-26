@@ -1,28 +1,46 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
+use clap::{arg, ArgAction, ArgMatches, command};
+use pkmn::PkmnObject;
 
 mod input;
 mod pkmn;
 
-use input::Selection;
-use pkmn::{pokemon, moves};
+use crate::input::Selection;
+use crate::pkmn::{moves, pokemon};
 
+fn app() -> ArgMatches {
+    command!()
+        .arg(
+            arg!(-t --test "test flag (no effect)")
+                .action(ArgAction::SetTrue),
+        )
+        .get_matches()
+}
 
 #[tokio::main]
+#[allow(unused_variables)]
 async fn main() -> Result<()> {
+    let matches = app();
+
     let client = rustemon::client::RustemonClient::default();
 
-    match input::get_selection() {
+    // ask user to chose between the different types of accessible data
+    let response: PkmnObject = match input::get_selection() {
         Ok(Selection::Pokemon) => {
             let pokemons_list = pokemon::names_list(&client).await?;
-            let pokemon = pokemon::MyPokemon::from_list_with_select(&client, &pokemons_list).await?;
-            println!("{}", pokemon);
+            pokemon::MyPokemon::from_list_with_select(&client, &pokemons_list)
+                .await?
+                .into()
         }
         Ok(Selection::Move) => {
             let moves_list = moves::names_list(&client).await?;
-            let move_ = moves::MyMove::from_list_with_select(&client, &moves_list).await?;
-            println!("{}", move_);
+            moves::MyMove::from_list_with_select(&client, &moves_list)
+                .await?
+                .into()
         }
-        Err(_) => bail!("Selection resulted in Error"),
-    }
+        Err(e) => return Err(e),
+    };
+
+    println!("{}", response);
     Ok(())
 }

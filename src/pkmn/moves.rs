@@ -6,9 +6,10 @@ use rustemon::client::RustemonClient;
 
 use rustemon::model::moves::Move;
 
-use crate::input;
 use super::types::Type;
+use crate::input;
 
+#[allow(dead_code)]
 pub struct MyMove {
     name: String,
     type_: Type,
