@@ -1,7 +1,7 @@
 use rustemon::model::pokemon::Pokemon;
 
-use crate::input;
 use super::types::Types;
+use crate::input;
 
 use anyhow::anyhow;
 use anyhow::bail;
