@@ -91,10 +91,7 @@ impl From<Move> for MyMove {
                 Some(types) => types.into(),
                 None => panic!(),
             },
-            accuracy: match mv.accuracy {
-                Some(acc) => acc,
-                None => panic!(),
-            },
+            accuracy: mv.accuracy.unwrap_or(0),
             pp: match mv.pp {
                 Some(pp) => pp,
                 None => panic!(),
