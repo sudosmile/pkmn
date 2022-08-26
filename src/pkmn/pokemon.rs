@@ -9,7 +9,7 @@ use anyhow::Result;
 use indicatif::ProgressBar;
 use rustemon::client::RustemonClient;
 
-pub(crate) struct MyPokemon {
+pub struct MyPokemon {
     name: String,
     types: Types,
     base_exp: i64,
