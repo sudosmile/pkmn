@@ -1,0 +1,15 @@
+[package]
+name = "pkmn"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+http-cache = "0.6.5"
+serde = "1"
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+rustemon = "2.0"
+dialoguer = {version = "0.10", features = ["fuzzy-select"] }
+indicatif = "0.17"
