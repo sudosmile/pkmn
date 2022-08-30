@@ -5,31 +5,35 @@ use rustemon::model::pokemon::Type;
 use rustemon::model::pokemon::TypeRelations;
 use rustemon::model::resource::NamedApiResource;
 use tokio::runtime::Handle;
-use tokio::runtime::Runtime;
 
 use crate::CLIENT;
 
+#[derive(PartialEq, Eq)]
 pub struct MyTypeRelations {
     no_damage_from: MyTypeNameVec,
     half_damage_from: MyTypeNameVec,
     double_damage_from: MyTypeNameVec,
 }
 
+#[derive(PartialEq, Eq)]
 pub struct MyType {
     name: String,
     damage_relations: MyTypeRelations,
 }
 
+#[derive(PartialEq, Eq)]
 pub struct MyTypeNameVec {
     arr: Vec<String>,
 }
 
+#[derive(PartialEq, Eq)]
 pub struct MyTypeVec {
     arr: Vec<MyType>,
 }
 
 impl std::fmt::Display for MyTypeVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO: calculate multipliers for multitype pkmn
         for i in &self.arr {
             writeln!(f, "{}", i)?;
         }
@@ -99,12 +103,14 @@ impl TryFrom<PokemonType> for MyType {
     }
 }
 
+#[allow(unused_must_use)]
 impl From<Vec<NamedApiResource<Type>>> for MyTypeNameVec {
     fn from(vec: Vec<NamedApiResource<Type>>) -> Self {
         let vecoftypename: Vec<String> = vec
             .iter()
             .map(|type_| -> String {
                 let handle = Handle::current();
+                // this is unused :(
                 handle.enter();
                 let type_ = futures::executor::block_on(type_.follow(&CLIENT)).unwrap();
                 type_.name.unwrap()

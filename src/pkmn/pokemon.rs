@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
 use indicatif::ProgressBar;
-use rustemon::client::RustemonClient;
 use rustemon::model::pokemon::Pokemon;
 use triple_accel::rdamerau_exp;
 
@@ -21,7 +20,8 @@ pub struct MyPokemon {
     weight: i64,
 }
 
-pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
+pub async fn names_list() -> Result<Vec<String>> {
+    let client = &crate::CLIENT;
     let len = {
         let pokemon_page = rustemon::pokemon::pokemon::get_page(client).await?;
         match pokemon_page.count {
@@ -49,9 +49,9 @@ pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
 
 impl MyPokemon {
     pub async fn from_list_with_select(
-        client: &RustemonClient,
         list: &[String],
     ) -> Result<MyPokemon> {
+        let client = &crate::CLIENT;
         let pkmn_name = input::fuzzy_select(list)?;
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
         let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(pkmn_name, client)
@@ -61,10 +61,10 @@ impl MyPokemon {
     }
 
     pub async fn closest_match_from_list(
-        client: &RustemonClient,
         list: &[String],
         name: &str,
     ) -> Result<MyPokemon> {
+        let client = &crate::CLIENT;
         let mut lowest_distance = 999;
         let mut closest_name: &str = "";
         for i in list {
@@ -81,7 +81,8 @@ impl MyPokemon {
         Ok(my_pokemon)
     }
 
-    pub async fn from_name(client: &RustemonClient, name: &str) -> Result<MyPokemon> {
+    pub async fn from_name(name: &str) -> Result<MyPokemon> {
+        let client = &crate::CLIENT;
         let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(name, client)
             .await?
             .try_into()?;

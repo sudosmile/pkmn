@@ -12,7 +12,10 @@ use crate::pkmn::pokemon;
 use crate::pkmn::pokemon::MyPokemon;
 
 lazy_static! {
-    static ref CLIENT: RustemonClient = RustemonClient::default();
+    static ref CLIENT: RustemonClient = {
+        info!("init rustemon client");
+        RustemonClient::default()
+    };
 }
 
 #[tokio::main]
@@ -25,7 +28,7 @@ async fn main() -> Result<()> {
     let matches = setup::app();
 
     info!("get list of pokemon names from rustemon");
-    let pokemons_list = pokemon::names_list(&CLIENT).await?;
+    let pokemons_list = pokemon::names_list().await?;
 
     info!("parse command line arguments");
     match matches.subcommand() {
@@ -37,7 +40,7 @@ async fn main() -> Result<()> {
             // if direct flag is set, query pokeapi directly
             if let Some(true) = sub_matches.get_one::<bool>("direct") {
                 info!("requesting exact pokemon from pokeapi");
-                let choice = match MyPokemon::from_name(&CLIENT, name).await {
+                let choice = match MyPokemon::from_name(name).await {
                     Ok(choice) => choice,
                     Err(e) => {
                         error!("no pokemon with name '{}' found", name);
@@ -50,7 +53,7 @@ async fn main() -> Result<()> {
             } else {
                 info!("find closest matching pokemon name");
                 let choice =
-                    MyPokemon::closest_match_from_list(&CLIENT, &pokemons_list, name).await?;
+                    MyPokemon::closest_match_from_list(&pokemons_list, name).await?;
                 println!("{}", choice);
             }
             return Ok(());
@@ -65,7 +68,7 @@ async fn main() -> Result<()> {
     }
 
     info!("let user choose a pokemon from the list");
-    let choice = MyPokemon::from_list_with_select(&CLIENT, &pokemons_list).await?;
+    let choice = MyPokemon::from_list_with_select(&pokemons_list).await?;
 
     println!("{}", choice);
     Ok(())
