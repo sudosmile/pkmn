@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
     info!("initiate Rustemon Client (pokeapi wrapper)");
     let client = RustemonClient::default();
 
-    info!("get list of pokemon from rustemon");
+    info!("get list of pokemon names from rustemon");
     let pokemons_list = pokemon::names_list(&client).await?;
 
     info!("parse command line arguments");

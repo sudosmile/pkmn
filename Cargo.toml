@@ -9,8 +9,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2", features = ["cargo"] }
-http-cache = "0.6"
-serde = "1"
 anyhow = "1"
 tokio = { version = "1", features = ["full"] }
 rustemon = "2.0"
