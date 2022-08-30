@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 
 pub fn fuzzy_select<T>(list: &[T]) -> Result<&T> 

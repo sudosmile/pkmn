@@ -1,13 +1,13 @@
-use rustemon::model::pokemon::Pokemon;
-
-use super::types::Types;
-use crate::input;
-
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
 use indicatif::ProgressBar;
 use rustemon::client::RustemonClient;
+use rustemon::model::pokemon::Pokemon;
+use triple_accel::rdamerau_exp;
+
+use super::types::Types;
+use crate::input;
 
 #[allow(dead_code)]
 pub struct MyPokemon {
@@ -43,11 +43,6 @@ pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
         offset += limit;
         bar.inc(limit.try_into()?);
     }
-    // (#1) replace the dashes with spaces for easier input (see #2)
-    list_of_pokemon = list_of_pokemon
-        .iter()
-        .map(|s| s.replace('-', " "))
-        .collect();
     Ok(list_of_pokemon)
 }
 
@@ -56,9 +51,37 @@ impl MyPokemon {
         client: &RustemonClient,
         list: &[String],
     ) -> Result<MyPokemon> {
-        let pkmn_name = input::fuzzy_select(list)?.replace(' ', "-");
+        let pkmn_name = input::fuzzy_select(list)?;
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
-        let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(&pkmn_name, client)
+        let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(pkmn_name, client)
+            .await?
+            .try_into()?;
+        Ok(my_pokemon)
+    }
+
+    pub async fn closest_match_from_list(
+        client: &RustemonClient,
+        list: &[String],
+        name: &str,
+    ) -> Result<MyPokemon> {
+        let mut lowest_distance = 999;
+        let mut closest_name: &str = "";
+        for i in list {
+            // use damereau-levenshtein algorithm to calculate distance between the strings
+            let distance = rdamerau_exp(name.as_bytes(), i.as_str().as_bytes());
+            if distance < lowest_distance {
+                lowest_distance = distance;
+                closest_name = i;
+            };
+        }
+        let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(closest_name, client)
+            .await?
+            .try_into()?;
+        Ok(my_pokemon)
+    }
+
+    pub async fn from_name(client: &RustemonClient, name: &str) -> Result<MyPokemon> {
+        let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(name, client)
             .await?
             .try_into()?;
         Ok(my_pokemon)
