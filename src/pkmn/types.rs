@@ -1,124 +1,130 @@
+use anyhow::bail;
+use anyhow::Result;
 use rustemon::model::pokemon::PokemonType;
-use rustemon::model::pokemon::Type as rustemonType;
+use rustemon::model::pokemon::Type;
+use rustemon::model::pokemon::TypeRelations;
 use rustemon::model::resource::NamedApiResource;
+use tokio::runtime::Handle;
+use tokio::runtime::Runtime;
 
-pub enum Type {
-    Normal,
-    Psychic,
-    Fire,
-    Bug,
-    Water,
-    Rock,
-    Grass,
-    Ghost,
-    Electric,
-    Dark,
-    Ice,
-    Dragon,
-    Fighting,
-    Steel,
-    Poison,
-    Fairy,
-    Ground,
-    Flying,
+use crate::CLIENT;
+
+pub struct MyTypeRelations {
+    no_damage_from: MyTypeNameVec,
+    half_damage_from: MyTypeNameVec,
+    double_damage_from: MyTypeNameVec,
 }
 
-pub struct Types {
-    arr: Vec<Type>,
+pub struct MyType {
+    name: String,
+    damage_relations: MyTypeRelations,
 }
 
-impl From<Vec<PokemonType>> for Types {
-    fn from(v: Vec<PokemonType>) -> Self {
-        let mut ret = Self {
-            arr: Vec::with_capacity(v.len()),
-        };
-        for i in v {
-            ret.arr.push(i.into())
+pub struct MyTypeNameVec {
+    arr: Vec<String>,
+}
+
+pub struct MyTypeVec {
+    arr: Vec<MyType>,
+}
+
+impl std::fmt::Display for MyTypeVec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for i in &self.arr {
+            writeln!(f, "{}", i)?;
         }
-        ret
+        Ok(())
     }
 }
 
-impl From<NamedApiResource<rustemonType>> for Type {
-    fn from(t: NamedApiResource<rustemonType>) -> Self {
-        let name = match t.name {
-            Some(name) => name,
-            None => panic!(),
-        };
-        name.into()
-    }
-}
-
-impl From<PokemonType> for Type {
-    fn from(t: PokemonType) -> Self {
-        let namedapiressource = match t.type_ {
-            Some(t) => t,
-            None => panic!(),
-        };
-        namedapiressource.into()
-    }
-}
-
-impl From<String> for Type {
-    fn from(s: String) -> Self {
-        match s.to_lowercase().as_str() {
-            "normal" => Self::Normal,
-            "psychic" => Self::Psychic,
-            "fire" => Self::Fire,
-            "bug" => Self::Bug,
-            "water" => Self::Water,
-            "rock" => Self::Rock,
-            "grass" => Self::Grass,
-            "ghost" => Self::Ghost,
-            "electric" => Self::Electric,
-            "dark" => Self::Dark,
-            "ice" => Self::Ice,
-            "dragon" => Self::Dragon,
-            "fighting" => Self::Fighting,
-            "steel" => Self::Steel,
-            "poison" => Self::Poison,
-            "fairy" => Self::Fairy,
-            "ground" => Self::Ground,
-            "flying" => Self::Flying,
-            _ => panic!(),
-        }
-    }
-}
-
-impl std::fmt::Display for Type {
+impl std::fmt::Display for MyType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}",
-            match self {
-                Type::Normal => "Normal",
-                Type::Psychic => "Psychic",
-                Type::Fire => "Fire",
-                Type::Bug => "Bug",
-                Type::Water => "Water",
-                Type::Rock => "Rock",
-                Type::Grass => "Grass",
-                Type::Ghost => "Ghost",
-                Type::Electric => "Electric",
-                Type::Dark => "Dark",
-                Type::Ice => "Ice",
-                Type::Dragon => "Dragon",
-                Type::Fighting => "Fighting",
-                Type::Steel => "Steel",
-                Type::Poison => "Poison",
-                Type::Fairy => "Fairy",
-                Type::Ground => "Ground",
-                Type::Flying => "Flying",
-            }
+            "type: {}
+    takes x0 dmg from: {}
+    takes x0.5 dmg from: {}
+    takes x2 dmg from: {}",
+            self.name, 
+            self.damage_relations.no_damage_from,
+            self.damage_relations.half_damage_from,
+            self.damage_relations.double_damage_from,
         )
     }
 }
 
-impl std::fmt::Display for Types {
+impl std::fmt::Display for MyTypeNameVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for i in &self.arr {
-            write!(f, "{} ", i)?;
+            write!(f, "[{}]", i)?;
         }
         Ok(())
+    }
+}
+
+#[allow(unused_variables)]
+fn named_to_ressource<T>(named: NamedApiResource<T>) -> T
+where
+    T: for<'de> serde::de::Deserialize<'de>,
+{
+    let handle = Handle::current();
+    let enterguard = handle.enter();
+    futures::executor::block_on(named.follow(&CLIENT)).unwrap()
+}
+
+impl From<Vec<PokemonType>> for MyTypeVec {
+    fn from(v: Vec<PokemonType>) -> Self {
+        let mut new: Vec<MyType> = vec![];
+        for i in v {
+            new.push(i.try_into().unwrap())
+        }
+        Self { arr: new }
+    }
+}
+
+impl TryFrom<PokemonType> for MyType {
+    type Error = anyhow::Error;
+
+    fn try_from(value: PokemonType) -> Result<Self, Self::Error> {
+        let type_: Type = named_to_ressource(match value.type_ {
+            Some(named) => named,
+            None => bail!("conversion failed"),
+        });
+        let name = type_.name.unwrap();
+        let damage_relations = type_.damage_relations.unwrap().try_into()?;
+        Ok(Self {
+            name,
+            damage_relations,
+        })
+    }
+}
+
+impl From<Vec<NamedApiResource<Type>>> for MyTypeNameVec {
+    fn from(vec: Vec<NamedApiResource<Type>>) -> Self {
+        let vecoftypename: Vec<String> = vec
+            .iter()
+            .map(|type_| -> String {
+                let handle = Handle::current();
+                handle.enter();
+                let type_ = futures::executor::block_on(type_.follow(&CLIENT)).unwrap();
+                type_.name.unwrap()
+            })
+            .collect();
+        Self { arr: vecoftypename }
+    }
+}
+
+impl TryFrom<TypeRelations> for MyTypeRelations {
+    type Error = anyhow::Error;
+
+    fn try_from(value: TypeRelations) -> Result<Self, Self::Error> {
+        let no_damage_from: MyTypeNameVec = value.no_damage_from.unwrap().into();
+        let half_damage_from: MyTypeNameVec = value.half_damage_from.unwrap().into();
+        let double_damage_from: MyTypeNameVec = value.double_damage_from.unwrap().into();
+        Ok(Self {
+            no_damage_from,
+            half_damage_from,
+            double_damage_from,
+        })
     }
 }

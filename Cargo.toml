@@ -17,6 +17,9 @@ indicatif = "0.17"
 simplelog = "0.12"
 log = "0.4.17"
 triple_accel = "0.4.0"
+serde = "1"
+lazy_static = "1.4.0"
+futures = "0.3.24"
 
 [profile.release]
 lto = "fat"

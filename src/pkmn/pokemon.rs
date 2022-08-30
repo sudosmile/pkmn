@@ -6,15 +6,16 @@ use rustemon::client::RustemonClient;
 use rustemon::model::pokemon::Pokemon;
 use triple_accel::rdamerau_exp;
 
-use super::types::Types;
 use crate::input;
+
+use super::types::MyTypeVec;
 
 #[allow(dead_code)]
 pub struct MyPokemon {
     id: i64,
     order: i64,
     name: String,
-    types: Types,
+    types: MyTypeVec,
     base_exp: i64,
     height: i64,
     weight: i64,
@@ -96,7 +97,7 @@ impl TryFrom<Pokemon> for MyPokemon {
             Some(name) => name,
             None => bail!("failed to parse pokemon struct"),
         };
-        let types: Types = match pkmn.types {
+        let types: MyTypeVec = match pkmn.types {
             Some(types) => types.into(),
             None => bail!("failed to parse pokemon struct"),
         };
@@ -138,10 +139,10 @@ impl std::fmt::Display for MyPokemon {
             f,
             "id: {id}
 name: {name}
-type: {types}
 base_exp: {base_exp}
 height: {height}
-weight: {weight}",
+weight: {weight}
+{types}",
             id = self.id,
             name = self.name,
             types = self.types,
