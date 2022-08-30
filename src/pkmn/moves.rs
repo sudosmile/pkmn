@@ -51,9 +51,8 @@ pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
 
 impl MyMove {
     pub async fn from_list_with_select(client: &RustemonClient, list: &[String]) -> Result<MyMove> {
-        let pkmn_index = input::select_index(list)?;
+        let pkmn_name = input::fuzzy_select(list)?.replace(' ', "-");
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
-        let pkmn_name = list[pkmn_index].replace(' ', "-");
         let my_pokemon: MyMove = rustemon::moves::move_::get_by_name(&pkmn_name, client)
             .await?
             .into();

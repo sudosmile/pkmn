@@ -11,6 +11,8 @@ use rustemon::client::RustemonClient;
 
 #[allow(dead_code)]
 pub struct MyPokemon {
+    id: i64,
+    order: i64,
     name: String,
     types: Types,
     base_exp: i64,
@@ -18,16 +20,14 @@ pub struct MyPokemon {
     weight: i64,
 }
 
-async fn list_len(client: &RustemonClient) -> Result<i64> {
-    let pokemon_page = rustemon::pokemon::pokemon::get_page(client).await?;
-    Ok(match pokemon_page.count {
-        Some(n) => n,
-        None => bail!("failed to get length of list of all pokemon"),
-    })
-}
-
 pub async fn names_list(client: &RustemonClient) -> Result<Vec<String>> {
-    let len = list_len(client).await?;
+    let len = {
+        let pokemon_page = rustemon::pokemon::pokemon::get_page(client).await?;
+        match pokemon_page.count {
+            Some(n) => n,
+            None => bail!("failed to get length of list of all pokemon"),
+        }
+    };
     let mut list_of_pokemon: Vec<String> = Vec::with_capacity(len.try_into()?);
     let mut offset: i64 = 0;
     let limit = 100;
@@ -56,40 +56,56 @@ impl MyPokemon {
         client: &RustemonClient,
         list: &[String],
     ) -> Result<MyPokemon> {
-        let pkmn_index = input::select_index(list)?;
+        let pkmn_name = input::fuzzy_select(list)?.replace(' ', "-");
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
-        let pkmn_name = list[pkmn_index].replace(' ', "-");
         let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(&pkmn_name, client)
             .await?
-            .into();
+            .try_into()?;
         Ok(my_pokemon)
     }
 }
 
-impl From<Pokemon> for MyPokemon {
-    fn from(pkmn: Pokemon) -> Self {
-        Self {
-            name: match pkmn.name {
-                Some(name) => name,
-                None => panic!(),
-            },
-            types: match pkmn.types {
-                Some(types) => types.into(),
-                None => panic!(),
-            },
-            base_exp: match pkmn.base_experience {
-                Some(exp) => exp,
-                None => panic!(),
-            },
-            height: match pkmn.height {
-                Some(height) => height,
-                None => panic!(),
-            },
-            weight: match pkmn.weight {
-                Some(weight) => weight,
-                None => panic!(),
-            },
-        }
+impl TryFrom<Pokemon> for MyPokemon {
+    type Error = anyhow::Error;
+
+    fn try_from(pkmn: Pokemon) -> Result<Self, Self::Error> {
+        let name = match pkmn.name {
+            Some(name) => name,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let types: Types = match pkmn.types {
+            Some(types) => types.into(),
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let base_exp = match pkmn.base_experience {
+            Some(exp) => exp,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let height = match pkmn.height {
+            Some(height) => height,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let weight = match pkmn.weight {
+            Some(weight) => weight,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let id = match pkmn.id {
+            Some(id) => id,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        let order = match pkmn.order {
+            Some(order) => order,
+            None => bail!("failed to parse pokemon struct"),
+        };
+        Ok(Self {
+            id,
+            order,
+            name,
+            types,
+            base_exp,
+            height,
+            weight,
+        })
     }
 }
 
@@ -97,11 +113,13 @@ impl std::fmt::Display for MyPokemon {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "name: {name}
+            "id: {id}
+name: {name}
 type: {types}
 base_exp: {base_exp}
 height: {height}
 weight: {weight}",
+            id = self.id,
             name = self.name,
             types = self.types,
             base_exp = self.base_exp,

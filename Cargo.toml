@@ -16,6 +16,8 @@ tokio = { version = "1", features = ["full"] }
 rustemon = "2.0"
 dialoguer = {version = "0.10", features = ["fuzzy-select"] }
 indicatif = "0.17"
+simplelog = "0.12"
+log = "0.4.17"
 
 [profile.release]
 lto = "fat"
