@@ -48,9 +48,7 @@ pub async fn names_list() -> Result<Vec<String>> {
 }
 
 impl MyPokemon {
-    pub async fn from_list_with_select(
-        list: &[String],
-    ) -> Result<MyPokemon> {
+    pub async fn from_list_with_select(list: &[String]) -> Result<MyPokemon> {
         let client = &crate::CLIENT;
         let pkmn_name = input::fuzzy_select(list)?;
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
@@ -60,10 +58,7 @@ impl MyPokemon {
         Ok(my_pokemon)
     }
 
-    pub async fn closest_match_from_list(
-        list: &[String],
-        name: &str,
-    ) -> Result<MyPokemon> {
+    pub async fn closest_match_from_list(list: &[String], name: &str) -> Result<MyPokemon> {
         let client = &crate::CLIENT;
         let mut lowest_distance = 999;
         let mut closest_name: &str = "";

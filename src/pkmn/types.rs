@@ -49,7 +49,7 @@ impl std::fmt::Display for MyType {
     takes x0 dmg from: {}
     takes x0.5 dmg from: {}
     takes x2 dmg from: {}",
-            self.name, 
+            self.name,
             self.damage_relations.no_damage_from,
             self.damage_relations.half_damage_from,
             self.damage_relations.double_damage_from,
@@ -67,7 +67,7 @@ impl std::fmt::Display for MyTypeNameVec {
 }
 
 #[allow(unused_variables)]
-fn named_to_ressource<T>(named: NamedApiResource<T>) -> T
+fn named_to_ressource<T>(named: &NamedApiResource<T>) -> T
 where
     T: for<'de> serde::de::Deserialize<'de>,
 {
@@ -90,10 +90,11 @@ impl TryFrom<PokemonType> for MyType {
     type Error = anyhow::Error;
 
     fn try_from(value: PokemonType) -> Result<Self, Self::Error> {
-        let type_: Type = named_to_ressource(match value.type_ {
-            Some(named) => named,
+        let original = match value.type_ {
+            Some(name) => name,
             None => bail!("conversion failed"),
-        });
+        };
+        let type_: Type = named_to_ressource(&original);
         let name = type_.name.unwrap();
         let damage_relations = type_.damage_relations.unwrap().try_into()?;
         Ok(Self {
@@ -108,13 +109,7 @@ impl From<Vec<NamedApiResource<Type>>> for MyTypeNameVec {
     fn from(vec: Vec<NamedApiResource<Type>>) -> Self {
         let vecoftypename: Vec<String> = vec
             .iter()
-            .map(|type_| -> String {
-                let handle = Handle::current();
-                // this is unused :(
-                handle.enter();
-                let type_ = futures::executor::block_on(type_.follow(&CLIENT)).unwrap();
-                type_.name.unwrap()
-            })
+            .map(|type_| -> String { named_to_ressource(type_).name.unwrap() })
             .collect();
         Self { arr: vecoftypename }
     }

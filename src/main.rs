@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 use anyhow::Result;
+use lazy_static::lazy_static;
 use log::{error, info, warn};
 use rustemon::client::RustemonClient;
-use lazy_static::lazy_static;
 
 mod input;
 mod pkmn;
@@ -52,8 +52,7 @@ async fn main() -> Result<()> {
             // (uses levenshtein distance)
             } else {
                 info!("find closest matching pokemon name");
-                let choice =
-                    MyPokemon::closest_match_from_list(&pokemons_list, name).await?;
+                let choice = MyPokemon::closest_match_from_list(&pokemons_list, name).await?;
                 println!("{}", choice);
             }
             return Ok(());
