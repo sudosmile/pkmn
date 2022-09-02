@@ -38,9 +38,8 @@ async fn main() -> Result<()> {
     let pokemons_list = pokemon::names_list().await?;
 
     info!("parse command line arguments");
-    let choice: MyPokemon = match matches.subcommand() {
-        // name subcommand match
-        Some(("name", sub_matches)) => {
+    let choice: MyPokemon = {
+        if let Some(("name", sub_matches)) = matches.subcommand() {
             let name = sub_matches
                 .get_one::<String>("NAME")
                 .expect("could not parse pokemon name");
@@ -57,18 +56,10 @@ async fn main() -> Result<()> {
                 }
             } else {
                 // no direct flag set, find closest matching pokemon name
-                // (uses levenshtein distance)
                 info!("find closest matching pokemon name");
                 MyPokemon::closest_match_from_list(&pokemons_list, name).await?
             }
-        }
-        // unreachable path
-        Some(_) => {
-            warn!("unreachable path reached -- somehow");
-            unreachable!("exhausted list of subcommands and subcommand_required prevents `None`")
-        }
-        // no subcommand -- continue
-        None => {
+        } else {
             info!("let user choose a pokemon from the list");
             let choice = MyPokemon::from_list_with_select(&pokemons_list).await?;
             choice
