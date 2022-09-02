@@ -1,6 +1,6 @@
 [package]
 name = "pkmn"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ashe Aupepin <ashe.sudosmile@gmail.com>"]
 description = "pokedex like cli, using the pokeapi and the excellent Rustemon crate"
 edition = "2021"
@@ -11,7 +11,7 @@ edition = "2021"
 clap = { version = "3.2", features = ["cargo"] }
 anyhow = "1"
 tokio = { version = "1", features = ["full"] }
-rustemon = "2.0"
+rustemon = "2.1.0"
 dialoguer = {version = "0.10", features = ["fuzzy-select"] }
 indicatif = "0.17"
 simplelog = "0.12"
@@ -20,6 +20,8 @@ triple_accel = "0.4.0"
 serde = "1"
 lazy_static = "1.4.0"
 futures = "0.3.24"
+dirs = "4"
+http-cache = "0.6.5"
 
 [profile.release]
 lto = "fat"

@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
 use rustemon::model::pokemon::PokemonType;
@@ -8,32 +9,50 @@ use tokio::runtime::Handle;
 
 use crate::CLIENT;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct MyTypeRelations {
     no_damage_from: MyTypeNameVec,
     half_damage_from: MyTypeNameVec,
     double_damage_from: MyTypeNameVec,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct MyType {
     name: String,
     damage_relations: MyTypeRelations,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct MyTypeNameVec {
     arr: Vec<String>,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct MyTypeVec {
     arr: Vec<MyType>,
 }
 
+/// helper function that follows the api link to the ressource
+/// (an asynchronous task) in a sync function
+///
+/// # Examples
+/// ```
+/// let type_named: NamedApiResource<Type>;
+/// let type_: Type = named_to_ressource(type_named);
+/// ```
+///
+#[allow(unused_variables)]
+fn named_to_ressource<T>(named: &NamedApiResource<T>) -> Result<T>
+where
+    T: for<'de> serde::de::Deserialize<'de>,
+{
+    let handle = Handle::current();
+    let enterguard = handle.enter();
+    Ok(futures::executor::block_on(named.follow(&CLIENT))?)
+}
+
 impl std::fmt::Display for MyTypeVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: calculate multipliers for multitype pkmn
         for i in &self.arr {
             writeln!(f, "{}", i)?;
         }
@@ -66,23 +85,15 @@ impl std::fmt::Display for MyTypeNameVec {
     }
 }
 
-#[allow(unused_variables)]
-fn named_to_ressource<T>(named: &NamedApiResource<T>) -> T
-where
-    T: for<'de> serde::de::Deserialize<'de>,
-{
-    let handle = Handle::current();
-    let enterguard = handle.enter();
-    futures::executor::block_on(named.follow(&CLIENT)).unwrap()
-}
+impl TryFrom<Vec<PokemonType>> for MyTypeVec {
+    type Error = anyhow::Error;
 
-impl From<Vec<PokemonType>> for MyTypeVec {
-    fn from(v: Vec<PokemonType>) -> Self {
+    fn try_from(v: Vec<PokemonType>) -> Result<MyTypeVec> {
         let mut new: Vec<MyType> = vec![];
-        for i in v {
-            new.push(i.try_into().unwrap())
+        for type_ in v {
+            new.push(type_.try_into()?)
         }
-        Self { arr: new }
+        Ok(Self { arr: new })
     }
 }
 
@@ -94,9 +105,12 @@ impl TryFrom<PokemonType> for MyType {
             Some(name) => name,
             None => bail!("conversion failed"),
         };
-        let type_: Type = named_to_ressource(&original);
-        let name = type_.name.unwrap();
-        let damage_relations = type_.damage_relations.unwrap().try_into()?;
+        let type_: Type = named_to_ressource(&original)?;
+        let name = type_.name.ok_or_else(|| anyhow!("unwrapped a None"))?;
+        let damage_relations = type_
+            .damage_relations
+            .ok_or_else(|| anyhow!("unwrapped a None"))?
+            .try_into()?;
         Ok(Self {
             name,
             damage_relations,
@@ -105,13 +119,21 @@ impl TryFrom<PokemonType> for MyType {
 }
 
 #[allow(unused_must_use)]
-impl From<Vec<NamedApiResource<Type>>> for MyTypeNameVec {
-    fn from(vec: Vec<NamedApiResource<Type>>) -> Self {
-        let vecoftypename: Vec<String> = vec
-            .iter()
-            .map(|type_| -> String { named_to_ressource(type_).name.unwrap() })
-            .collect();
-        Self { arr: vecoftypename }
+impl TryFrom<Vec<NamedApiResource<Type>>> for MyTypeNameVec {
+    type Error = anyhow::Error;
+
+    fn try_from(source: Vec<NamedApiResource<Type>>) -> Result<MyTypeNameVec> {
+        let mut type_names_vec: Vec<String> = vec![];
+        for i in source {
+            type_names_vec.push(
+                named_to_ressource(&i)?
+                    .name
+                    .ok_or_else(|| anyhow!("unwrapped a None"))?,
+            )
+        }
+        Ok(Self {
+            arr: type_names_vec,
+        })
     }
 }
 
@@ -119,9 +141,18 @@ impl TryFrom<TypeRelations> for MyTypeRelations {
     type Error = anyhow::Error;
 
     fn try_from(value: TypeRelations) -> Result<Self, Self::Error> {
-        let no_damage_from: MyTypeNameVec = value.no_damage_from.unwrap().into();
-        let half_damage_from: MyTypeNameVec = value.half_damage_from.unwrap().into();
-        let double_damage_from: MyTypeNameVec = value.double_damage_from.unwrap().into();
+        let no_damage_from: MyTypeNameVec = value
+            .no_damage_from
+            .ok_or_else(|| anyhow!("unwrapped a None"))?
+            .try_into()?;
+        let half_damage_from: MyTypeNameVec = value
+            .half_damage_from
+            .ok_or_else(|| anyhow!("unwrapped a None"))?
+            .try_into()?;
+        let double_damage_from: MyTypeNameVec = value
+            .double_damage_from
+            .ok_or_else(|| anyhow!("unwrapped a None"))?
+            .try_into()?;
         Ok(Self {
             no_damage_from,
             half_damage_from,

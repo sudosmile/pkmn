@@ -21,6 +21,7 @@ pub struct MyPokemon {
 }
 
 pub async fn names_list() -> Result<Vec<String>> {
+    // TODO: use async better to make this faster
     let client = &crate::CLIENT;
     let len = {
         let pokemon_page = rustemon::pokemon::pokemon::get_page(client).await?;
@@ -94,7 +95,7 @@ impl TryFrom<Pokemon> for MyPokemon {
             None => bail!("failed to parse pokemon struct"),
         };
         let types: MyTypeVec = match pkmn.types {
-            Some(types) => types.into(),
+            Some(types) => types.try_into()?,
             None => bail!("failed to parse pokemon struct"),
         };
         let base_exp = match pkmn.base_experience {
