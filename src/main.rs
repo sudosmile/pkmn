@@ -3,7 +3,7 @@
 use anyhow::Result;
 use http_cache::CacheMode;
 use lazy_static::lazy_static;
-use log::{error, info, warn};
+use log::{error, info};
 use rustemon::client::RustemonClient;
 
 mod input;

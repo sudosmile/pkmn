@@ -21,6 +21,7 @@ serde = "1"
 lazy_static = "1.4.0"
 dirs = "4"
 http-cache = "0.6.5"
+futures = "0.3.24"
 
 [profile.release]
 lto = "fat"
