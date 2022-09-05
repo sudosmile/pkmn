@@ -8,11 +8,6 @@ pub fn app() -> ArgMatches {
             Command::new("name")
                 .about("Get info by pokemon name (i.e: charizard-gmax) [hyphen separated]")
                 .arg(arg!(<NAME> "Name of the pokemon"))
-                .arg(
-                    arg!(-d --direct "Directly query pokeapi with the name")
-                        .required(false)
-                        .action(ArgAction::SetTrue),
-                )
                 .arg_required_else_help(true),
         )
         .get_matches()

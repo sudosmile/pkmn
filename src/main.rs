@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
-use anyhow::Result;
+use anyhow::{anyhow, bail, Result};
 use http_cache::CacheMode;
 use lazy_static::lazy_static;
-use log::{error, info};
+use log::{error, info, warn};
+use online::check;
 use rustemon::client::RustemonClient;
 
 mod input;
@@ -34,6 +35,10 @@ async fn main() -> Result<()> {
     info!("get command line arguments");
     let matches = setup::app();
 
+    if check(None).await.is_err() {
+        warn!("No internet connection, Pages not found in Cache will not be obtainable")
+    }
+
     info!("get list of pokemon names from rustemon");
     let pokemons_list = pokemon::names_list().await?;
 
@@ -43,26 +48,11 @@ async fn main() -> Result<()> {
             let name = sub_matches
                 .get_one::<String>("NAME")
                 .expect("could not parse pokemon name");
-
-            if let Some(true) = sub_matches.get_one::<bool>("direct") {
-                // if direct flag is set, query pokeapi directly
-                info!("requesting exact pokemon from pokeapi");
-                match MyPokemon::from_name(name).await {
-                    Ok(choice) => choice,
-                    Err(e) => {
-                        error!("no pokemon with name '{}' found", name);
-                        return Err(e);
-                    }
-                }
-            } else {
-                // no direct flag set, find closest matching pokemon name
-                info!("find closest matching pokemon name");
-                MyPokemon::closest_match_from_list(&pokemons_list, name).await?
-            }
+            info!("find closest matching pokemon name");
+            MyPokemon::closest_match_from_list(&pokemons_list, name).await?
         } else {
             info!("let user choose a pokemon from the list");
-            let choice = MyPokemon::from_list_with_select(&pokemons_list).await?;
-            choice
+            MyPokemon::from_list_with_select(&pokemons_list).await?
         }
     };
 

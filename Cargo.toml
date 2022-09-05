@@ -13,6 +13,7 @@ tokio = { version = "1", features = ["full"] }
 dialoguer = { version = "0.10", features = ["fuzzy-select"] }
 rustemon = "2.1.0"
 anyhow = "1"
+thiserror = "1"
 indicatif = "0.17"
 simplelog = "0.12"
 log = "0.4.17"
@@ -22,6 +23,7 @@ lazy_static = "1.4.0"
 dirs = "4"
 http-cache = "0.6.5"
 futures = "0.3.24"
+online = "3.0.2"
 
 [profile.release]
 lto = "fat"

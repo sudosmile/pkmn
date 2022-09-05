@@ -2,6 +2,9 @@ use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
 use indicatif::ProgressBar;
+use log::error;
+use log::info;
+use log::log;
 use rustemon::model::pokemon::Pokemon;
 use triple_accel::rdamerau_exp;
 
@@ -36,10 +39,14 @@ pub async fn names_list() -> Result<Vec<String>> {
     let bar = ProgressBar::new(len.try_into()?);
 
     while offset < len {
-        let current_page =
-            rustemon::pokemon::pokemon::get_page_with_param(offset, limit, client).await?;
+        let current_page = rustemon::pokemon::pokemon::get_page_with_param(offset, limit, client)
+            .await
+            .map_err(|e| {
+                error!("{:?}", e);
+                anyhow!("failed to get Pokemon from API")
+            })?;
 
-        for pokemon in current_page.results.unwrap() {
+        for pokemon in current_page.results.ok_or_else(|| anyhow!("bail"))? {
             list_of_pokemon.push(pokemon.name.ok_or_else(|| anyhow!("unnamed pokemon"))?);
         }
         offset += limit;
@@ -54,7 +61,11 @@ impl MyPokemon {
         let pkmn_name = input::fuzzy_select(list)?;
         // (#2) replace the spaces with dashes for getting info from the pokeapi (see #1)
         let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(pkmn_name, client)
-            .await?
+            .await
+            .map_err(|e| {
+                error!("{:?}", e);
+                anyhow!("failed to get Pokemon from API")
+            })?
             .try_into()?;
         Ok(my_pokemon)
     }
@@ -71,8 +82,13 @@ impl MyPokemon {
                 closest_name = i;
             };
         }
+        info!("found: {}", closest_name);
         let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(closest_name, client)
-            .await?
+            .await
+            .map_err(|e| {
+                error!("{:?}", e);
+                anyhow!("failed to get Pokemon from API")
+            })?
             .try_into()?;
         Ok(my_pokemon)
     }
