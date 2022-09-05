@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-
-use anyhow::{Result};
+use anyhow::Result;
 use http_cache::CacheMode;
 use lazy_static::lazy_static;
 use log::{info, warn};

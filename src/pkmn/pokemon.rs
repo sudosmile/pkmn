@@ -93,13 +93,13 @@ impl MyPokemon {
         Ok(my_pokemon)
     }
 
-    pub async fn from_name(name: &str) -> Result<MyPokemon> {
-        let client = &crate::CLIENT;
-        let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(name, client)
-            .await?
-            .try_into()?;
-        Ok(my_pokemon)
-    }
+    // pub async fn from_name(name: &str) -> Result<MyPokemon> {
+    //     let client = &crate::CLIENT;
+    //     let my_pokemon: MyPokemon = rustemon::pokemon::pokemon::get_by_name(name, client)
+    //         .await?
+    //         .try_into()?;
+    //     Ok(my_pokemon)
+    // }
 }
 
 impl TryFrom<Pokemon> for MyPokemon {
