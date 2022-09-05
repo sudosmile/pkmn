@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result};
 use http_cache::CacheMode;
 use lazy_static::lazy_static;
-use log::{error, info, warn};
+use log::{info, warn};
 use online::check;
 use rustemon::client::RustemonClient;
 

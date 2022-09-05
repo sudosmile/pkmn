@@ -4,7 +4,7 @@ use anyhow::Result;
 use indicatif::ProgressBar;
 use log::error;
 use log::info;
-use log::log;
+
 use rustemon::model::pokemon::Pokemon;
 use triple_accel::rdamerau_exp;
 

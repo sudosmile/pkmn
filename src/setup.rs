@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{arg, command, ArgAction, ArgMatches, Command};
+use clap::{arg, command, ArgMatches, Command};
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 pub fn app() -> ArgMatches {
