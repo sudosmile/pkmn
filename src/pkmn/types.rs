@@ -41,13 +41,12 @@ pub struct MyTypeVec {
 /// let type_: Type = named_to_ressource(type_named);
 /// ```
 ///
-#[allow(unused_variables)]
 fn named_to_ressource<T>(named: &NamedApiResource<T>) -> Result<T>
 where
     T: for<'de> serde::de::Deserialize<'de>,
 {
     let handle = Handle::current();
-    let enterguard = handle.enter();
+    let _ = handle.enter();
     Ok(futures::executor::block_on(named.follow(&CLIENT))?)
 }
 
