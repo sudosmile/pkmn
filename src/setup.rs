@@ -1,33 +1,29 @@
 use anyhow::Result;
-use clap::{arg, command, ArgMatches, Command};
+use clap::{arg, command, ArgAction, ArgMatches};
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 pub fn app() -> ArgMatches {
     command!()
-        .subcommand(
-            Command::new("name")
-                .about("Get info by pokemon name (i.e: charizard-gmax) [hyphen separated]")
-                .arg(arg!(<NAME> "Name of the pokemon"))
-                .arg_required_else_help(true),
+        .arg(
+            arg!(
+                -d --debug "Turn debugging information on (each use means more info)"
+            )
+            .action(ArgAction::Count)
         )
+        .arg(arg!(-b --build "fill the cache for future use").action(ArgAction::SetTrue))
+        .arg(arg!(<NAME> "Name of the pokemon").required(false))
         .get_matches()
 }
 
-#[cfg(not(debug_assertions))]
-pub fn logging_init() -> Result<()> {
+pub fn logging_init(level: u8) -> Result<()> {
     TermLogger::init(
-        LevelFilter::Warn,
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )?;
-    Ok(())
-}
-
-#[cfg(debug_assertions)]
-pub fn logging_init() -> Result<()> {
-    TermLogger::init(
-        LevelFilter::Info,
+        match level {
+            0 => LevelFilter::Off,
+            1 => LevelFilter::Warn,
+            2 => LevelFilter::Info,
+            3 => LevelFilter::Debug,
+            _ => LevelFilter::Trace,
+        },
         Config::default(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
